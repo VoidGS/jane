@@ -14,6 +14,7 @@ import fs from 'fs'
 import path from 'path'
 import { CommandType, ComponentsButton, ComponentsModal, ComponentsSelect } from './@types/Command'
 import { EventType } from './@types/Event'
+import { connect } from 'mongoose'
 dotenv.config()
 
 const fileCondition = (fileName: string) => fileName.endsWith('.ts') || fileName.endsWith('.js')
@@ -46,9 +47,16 @@ export class ExtendedClient extends Client {
 		this.registerModules()
 		this.registerEvents()
 		this.login(process.env.BOT_TOKEN)
+		connect(process.env.DATABASE_URL).then(() =>
+			console.log('✅ Connected to the database'.green),
+		)
 	}
 
 	private registerCommands(commands: Array<ApplicationCommandDataResolvable>) {
+		this.guilds.cache.forEach((guild) => {
+			// guild.commands.set()
+		})
+
 		this.application?.commands
 			.set(commands)
 			.then(() => {
