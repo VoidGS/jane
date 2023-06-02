@@ -5,7 +5,7 @@ import {
 	TextInputBuilder,
 	TextInputStyle,
 } from 'discord.js'
-import { Command } from '../../structs/@types/Command'
+import { Command } from '../../../structs/@types/Command'
 
 export default new Command({
 	name: 'form',

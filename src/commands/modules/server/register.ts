@@ -10,9 +10,9 @@ import {
 	Role,
 	TextChannel,
 } from 'discord.js'
-import { Command } from '../../structs/@types/Command'
-import { RegisterModel } from '../../schemas/register'
-import { GuildModel } from '../../schemas/guilds'
+import { Command } from '../../../structs/@types/Command'
+import { RegisterModel } from '../../../schemas/register'
+import { GuildModel } from '../../../schemas/guilds'
 
 export default new Command({
 	name: 'register',

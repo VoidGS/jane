@@ -1,6 +1,6 @@
 import { TextChannel, time } from 'discord.js'
 import { Event } from '../../structs/@types/Event'
-import { generateCanva } from '../../commands/manage/welcome'
+import { generateCanva } from '../../commands/modules/server/welcome'
 
 export default new Event({
 	name: 'guildMemberAdd',

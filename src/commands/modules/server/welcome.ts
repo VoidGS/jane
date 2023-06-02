@@ -1,6 +1,6 @@
 import { ApplicationCommandType, AttachmentBuilder, User, time } from 'discord.js'
 import Canvas, { GlobalFonts } from '@napi-rs/canvas'
-import { Command } from '../../structs/@types/Command'
+import { Command } from '../../../structs/@types/Command'
 
 export default new Command({
 	name: 'welcome',
