@@ -14,7 +14,7 @@ import fs from 'fs'
 import path from 'path'
 import { CommandType, ComponentsButton, ComponentsModal, ComponentsSelect } from './@types/Command'
 import { EventType } from './@types/Event'
-// import { connect } from 'mongoose'
+import { connect } from 'mongoose'
 dotenv.config()
 
 const fileCondition = (fileName: string) => fileName.endsWith('.ts') || fileName.endsWith('.js')
@@ -47,27 +47,30 @@ export class ExtendedClient extends Client {
 		this.registerModules()
 		this.registerEvents()
 		this.login(process.env.BOT_TOKEN)
-		// connect(process.env.DATABASE_URL).then(() =>
-		// 	console.log('✅ Connected to the database'.green),
-		// )
+
+		connect(process.env.DATABASE_URL)
+			.then(() => console.log('🎉 Connected to the database'.green))
+			.catch((err) => {
+				console.log('❌ Database error: ' + err)
+			})
 	}
 
-	private registerCommands(commands: Array<ApplicationCommandDataResolvable>) {
-		this.guilds.cache.forEach((guild) => {
-			// guild.commands.set()
-		})
+	private async registerCommands(commands: Array<ApplicationCommandDataResolvable>) {
+		let i = 1
+		const slashDone = true
+		const guildsSize = this.guilds.cache.size
 
-		this.application?.commands
-			.set(commands)
-			.then(() => {
-				console.log('✅ Slash commands (/) defined.'.green)
-			})
-			.catch((error) => {
+		this.guilds.cache.forEach(async (guild) => {
+			await guild.commands.set(commands).catch((error) => {
 				console.log(
 					`❌ An error occurred while trying to set the Slash Commands (/): \n${error}`
 						.red,
 				)
 			})
+
+			if (i >= guildsSize && slashDone) console.log('✅ Slash commands (/) defined.'.green)
+			i++
+		})
 	}
 
 	private registerModules() {

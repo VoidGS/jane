@@ -13,7 +13,7 @@ const GuildModel = model<GuildSchema>(
 	new Schema<GuildSchema>({
 		GuildId: { type: String, required: true },
 		GuildName: { type: String, required: true },
-		RegisteredRoleId: { type: String, required: true },
+		RegisteredRoleId: { type: String, required: false },
 		GuildCreatedAt: { type: Date, required: true },
 		CreatedAt: { type: Date, required: true },
 	}),

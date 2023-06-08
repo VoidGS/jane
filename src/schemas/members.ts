@@ -1,20 +1,18 @@
 import { Schema, model } from 'mongoose'
 
-interface UserSchema {
+interface MemberSchema {
 	UserId: String
-	UserName: String
 	GuildId: String
 	CreatedAt: Date
 }
 
-const UserModel = model<UserSchema>(
-	'Users',
-	new Schema<UserSchema>({
+const MemberModel = model<MemberSchema>(
+	'Members',
+	new Schema<MemberSchema>({
 		UserId: { type: String, required: true },
-		UserName: { type: String, required: true },
 		GuildId: { type: String, required: true },
 		CreatedAt: { type: Date, required: true },
 	}),
 )
 
-export { UserModel }
+export { MemberModel }

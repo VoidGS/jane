@@ -11,7 +11,7 @@ import {
 	TextChannel,
 } from 'discord.js'
 import { Command } from '../../../structs/@types/Command'
-import { RegisterModel } from '../../../schemas/register'
+import { MemberModel } from '../../../schemas/members'
 import { GuildModel } from '../../../schemas/guilds'
 
 export default new Command({
@@ -105,7 +105,9 @@ export default new Command({
 				if (!guild) return
 				if (!(member instanceof GuildMember)) return
 
-				const foundUser = await RegisterModel.findOne({
+				await buttonInteraction.deferReply({ ephemeral: true })
+
+				const foundUser = await MemberModel.findOne({
 					UserId: user.id,
 					GuildId: guild.id,
 				})
@@ -126,7 +128,7 @@ export default new Command({
 					if (!registerRole) return
 
 					try {
-						const insertUser = await RegisterModel.insertMany([
+						const insertUser = await MemberModel.insertMany([
 							{ UserId: user.id, GuildId: guild.id, CreatedAt: new Date() },
 						])
 
@@ -137,16 +139,14 @@ export default new Command({
 						const checkmarkEmoji = guild.emojis.cache.get('1094475021956677723')
 
 						if (member.roles.cache.find((role) => role.id === registerRoleId))
-							buttonInteraction.reply({
-								ephemeral: true,
+							await buttonInteraction.editReply({
 								content: `${checkmarkEmoji} Registro concluído com sucesso!`,
 							})
 					} catch (error) {
 						console.log(error)
 					}
 				} else {
-					buttonInteraction.reply({
-						ephemeral: true,
+					await buttonInteraction.editReply({
 						content: `❌ Você já está registrado nesse servidor!`,
 					})
 				}
