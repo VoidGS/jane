@@ -14,6 +14,7 @@ import fs from 'fs'
 import path from 'path'
 import { CommandType, ComponentsButton, ComponentsModal, ComponentsSelect } from './@types/Command'
 import { EventType } from './@types/Event'
+import { connect } from 'mongoose'
 dotenv.config()
 
 const fileCondition = (fileName: string) => fileName.endsWith('.ts') || fileName.endsWith('.js')
@@ -46,33 +47,44 @@ export class ExtendedClient extends Client {
 		this.registerModules()
 		this.registerEvents()
 		this.login(process.env.BOT_TOKEN)
+
+		connect(process.env.DATABASE_URL)
+			.then(() => console.log('🎉 Connected to the database'.green))
+			.catch((err) => {
+				console.log('❌ Database error: ' + err)
+			})
 	}
 
-	private registerCommands(commands: Array<ApplicationCommandDataResolvable>) {
-		this.application?.commands
-			.set(commands)
-			.then(() => {
-				console.log('✅ Slash commands (/) defined.'.green)
-			})
-			.catch((error) => {
+	private async registerCommands(commands: Array<ApplicationCommandDataResolvable>) {
+		let i = 1
+		const slashDone = true
+		const guildsSize = this.guilds.cache.size
+
+		this.guilds.cache.forEach(async (guild) => {
+			await guild.commands.set(commands).catch((error) => {
 				console.log(
 					`❌ An error occurred while trying to set the Slash Commands (/): \n${error}`
 						.red,
 				)
 			})
+
+			if (i >= guildsSize && slashDone) console.log('✅ Slash commands (/) defined.'.green)
+			i++
+		})
 	}
 
 	private registerModules() {
 		const slashCommands: Array<ApplicationCommandDataResolvable> = []
 
-		const commandPath = path.join(__dirname, '..', 'commands')
+		const commandsPath = path.join(__dirname, '..', 'commands/modules')
 
-		fs.readdirSync(commandPath).forEach((local) => {
-			fs.readdirSync(commandPath + `/${local}/`)
+		fs.readdirSync(commandsPath).forEach((local) => {
+			fs.readdirSync(commandsPath + `/${local}/`)
 				.filter(fileCondition)
 				.forEach(async (fileName) => {
-					const command: CommandType = (await import(`../commands/${local}/${fileName}`))
-						?.default
+					const command: CommandType = (
+						await import(`../commands/modules/${local}/${fileName}`)
+					)?.default
 
 					const { name, buttons, selects, modals } = command
 
