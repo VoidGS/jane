@@ -1,7 +1,12 @@
-import { ApplicationCommandOptionType, ApplicationCommandType } from 'discord.js'
+import {
+	ApplicationCommandOptionType,
+	ApplicationCommandType,
+	EmbedBuilder,
+	GuildEmoji,
+} from 'discord.js'
 import { Command } from '../../../structs/@types/Command'
 import { rastrearEncomendas } from 'correios-brasil'
-import TrackingCorreios from 'tracking-correios'
+import { Encomenda, EncomendaInvalida, isEncomendaInvalida } from '../../../types/package'
 
 export default new Command({
 	name: 'package',
@@ -22,54 +27,88 @@ export default new Command({
 			],
 		},
 	],
-	async run({ interaction, options }) {
+	async run({ interaction, options, client }) {
 		const subCommand = options.getSubcommand()
 
 		switch (subCommand) {
 			case 'track': {
 				const trackingCode = options.getString('tracking-code', true)
 
-				rastrearEncomendas([trackingCode]).then((response) => {
-					console.log(response)
+				await interaction.deferReply()
 
-					if (Array.isArray(response) && response.length > 0) {
-						response.forEach((item) => {
-							const { codObjeto, eventos } = item
+				rastrearEncomendas([trackingCode])
+					.then(async (response: Encomenda[] | EncomendaInvalida[]) => {
+						response.forEach(async (encomenda) => {
+							if (isEncomendaInvalida(encomenda)) {
+								const { mensagem } = encomenda
 
-							console.log(codObjeto, eventos)
+								return await interaction.editReply({
+									content: `❌ ${mensagem}`,
+								})
+							}
+
+							const { codObjeto, eventos } = encomenda
+							const eventosEmbed: string[] = []
+							const correiosGuild = client.guilds.cache.get('1128747768354197624')
+							if (!correiosGuild) {
+								return await interaction.editReply({
+									content: '❌ Ocorreu um erro.',
+								})
+							}
+
+							eventos.forEach(async (evento) => {
+								console.log(evento)
+
+								const { descricao, dtHrCriado, unidade, unidadeDestino, urlIcone } =
+									evento
+								const { endereco, tipo, nome } = unidade
+								let correioEmoji: GuildEmoji | undefined
+								const getEmoji = urlIcone.split('/')
+								const emojiName = getEmoji.pop()?.replace('.png', '')
+
+								if (emojiName) {
+									const findEmoji = correiosGuild.emojis.cache.find(
+										(emoji) => emoji.name === emojiName.replaceAll('-', ''),
+									)
+
+									if (!findEmoji) {
+										const emojiImg = `https://rastreamento.correios.com.br/static/rastreamento-internet/imgs/${emojiName}.png`
+
+										correioEmoji = await correiosGuild.emojis.create({
+											attachment: emojiImg,
+											name: emojiName.replaceAll('-', ''),
+										})
+									} else {
+										correioEmoji = findEmoji
+									}
+								} else {
+									correioEmoji = undefined
+								}
+
+								eventosEmbed.push(`
+									> **${correioEmoji} ${correioEmoji ? ' - ' : ''} ${descricao}**
+									> ${unidade.tipo} ${unidadeDestino ? '→ ' + unidadeDestino.tipo : ''}
+									> ${dtHrCriado} 
+								`)
+							})
+
+							const embed = new EmbedBuilder()
+								.setDescription(
+									`
+									**Package Track - ${codObjeto}**
+									${eventosEmbed.join(' ')}
+								`,
+								)
+								.setColor('#F3C902')
+
+							return await interaction.editReply({
+								embeds: [embed],
+							})
 						})
-					} else {
-						interaction.reply({
-							content: '❌ An error occurred while trying to track the package.',
-							ephemeral: true,
-						})
-					}
-				})
-
-				// TrackingCorreios.track(trackingCode).then((response: any) => {
-				// 	console.log(response)
-
-				// 	if (Array.isArray(response) && response.length > 0) {
-				// 		response.forEach((item) => {
-				// 			const { numero, evento } = item
-
-				// 			if (Array.isArray(evento) && evento.length > 0) {
-				// 				evento.forEach((event) => {
-				// 					const { data, hora, descricao, local } = event
-
-				// 					console.log(data, hora, descricao, local)
-				// 				})
-				// 			}
-
-				// 			console.log(numero, evento)
-				// 		})
-				// 	} else {
-				// 		interaction.reply({
-				// 			content: '❌ An error occurred while trying to track the package.',
-				// 			ephemeral: true,
-				// 		})
-				// 	}
-				// })
+					})
+					.catch((err) => {
+						console.log(`${err}`.red)
+					})
 
 				break
 			}
